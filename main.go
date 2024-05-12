@@ -11,6 +11,12 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
+const (
+	GAME_WAITING = iota
+	GAME_RUNNING
+	GAME_OVER
+)
+
 type Game struct {
 	level        *Level
 	startTime    time.Time
@@ -20,6 +26,7 @@ type Game struct {
 	wormPicture  *ebiten.Image
 	candyPicture *ebiten.Image
 	restart      bool
+	gameState    int
 }
 
 func NewGame() *Game {
@@ -55,23 +62,45 @@ func (g *Game) Initialize() {
 	level.NewCandy()
 	g.level = level
 
+	g.gameState = GAME_WAITING
+	// TODO: no autostart in the future
+	g.StartGame()
+}
+
+func (g *Game) StartGame() {
+	g.gameState = GAME_RUNNING
 	g.startTime = time.Now()
 	g.currentTime = g.startTime
+}
+
+func (g *Game) EndGame() {
+	g.gameState = GAME_OVER
 }
 
 func (g *Game) Update() error {
 	t := time.Now()
 	g.keys = inpututil.AppendPressedKeys(g.keys[:0])
-	if (len(g.keys)) == 1 {
-		if g.keys[0] == ebiten.KeyArrowUp {
+	interestingKeys := [5]ebiten.Key{ebiten.KeyArrowUp, ebiten.KeyArrowDown, ebiten.KeyArrowLeft, ebiten.KeyArrowRight, ebiten.KeyR}
+	foundKey := ebiten.KeyMax
+	// find the last pressed valid key, so mashing the buttons on keyboard will move the worm
+	if (len(g.keys)) >= 1 {
+		for i := len(g.keys) - 1; i >= 0 && foundKey == ebiten.KeyMax; i-- {
+			for j := range interestingKeys {
+				if g.keys[i] == interestingKeys[j] {
+					foundKey = g.keys[i]
+					break
+				}
+			}
+		}
+		if foundKey == ebiten.KeyArrowUp {
 			g.level.NewOrientation(180)
-		} else if g.keys[0] == ebiten.KeyArrowDown {
+		} else if foundKey == ebiten.KeyArrowDown {
 			g.level.NewOrientation(0)
-		} else if g.keys[0] == ebiten.KeyArrowLeft {
+		} else if foundKey == ebiten.KeyArrowLeft {
 			g.level.NewOrientation(270)
-		} else if g.keys[0] == ebiten.KeyArrowRight {
+		} else if foundKey == ebiten.KeyArrowRight {
 			g.level.NewOrientation(90)
-		} else if g.keys[0] == ebiten.KeyR {
+		} else if foundKey == ebiten.KeyR {
 			g.restart = true
 		}
 	}
@@ -89,25 +118,28 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	if g.needsDraw {
-		wormPositions := g.level.GetWormPositions()
 
-		//op.GeoM.Reset()
+	if g.gameState == GAME_RUNNING {
+		if g.needsDraw {
+			wormPositions := g.level.GetWormPositions()
 
-		for i := 0; i < len(wormPositions); i++ {
-			//op.GeoM.Translate(float64(0), float64(0))
-			if i >= 0 {
-				op := &ebiten.DrawImageOptions{}
-				//op.GeoM.Reset()
-				op.GeoM.Translate(float64(wormPositions[i].x*100), float64(wormPositions[i].y*100))
+			//op.GeoM.Reset()
 
-				//op.GeoM.Translate(float64(100), float64(100))
-				screen.DrawImage(g.wormPicture, op)
+			for i := 0; i < len(wormPositions); i++ {
+				//op.GeoM.Translate(float64(0), float64(0))
+				if i >= 0 {
+					op := &ebiten.DrawImageOptions{}
+					//op.GeoM.Reset()
+					op.GeoM.Translate(float64(wormPositions[i].x*100), float64(wormPositions[i].y*100))
+
+					//op.GeoM.Translate(float64(100), float64(100))
+					screen.DrawImage(g.wormPicture, op)
+				}
 			}
+			op := &ebiten.DrawImageOptions{}
+			op.GeoM.Translate(float64(g.level.candy.x*100), float64(g.level.candy.y*100))
+			screen.DrawImage(g.candyPicture, op)
 		}
-		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Translate(float64(g.level.candy.x*100), float64(g.level.candy.y*100))
-		screen.DrawImage(g.candyPicture, op)
 	}
 }
 
