@@ -3,6 +3,7 @@ package main
 import (
 	"image"
 	_ "image/png"
+
 	"log"
 	"os"
 	"time"
@@ -63,8 +64,12 @@ func (g *Game) Initialize() {
 	g.level = level
 
 	g.gameState = GAME_WAITING
-	// TODO: no autostart in the future
-	g.StartGame()
+
+	g.WaitForStart()
+}
+
+func (g *Game) WaitForStart() {
+	g.gameState = GAME_WAITING
 }
 
 func (g *Game) StartGame() {
@@ -92,19 +97,26 @@ func (g *Game) Update() error {
 				}
 			}
 		}
-		if foundKey == ebiten.KeyArrowUp {
-			g.level.NewOrientation(180)
-		} else if foundKey == ebiten.KeyArrowDown {
-			g.level.NewOrientation(0)
-		} else if foundKey == ebiten.KeyArrowLeft {
-			g.level.NewOrientation(270)
-		} else if foundKey == ebiten.KeyArrowRight {
-			g.level.NewOrientation(90)
-		} else if foundKey == ebiten.KeyR {
-			g.restart = true
+		if g.gameState == GAME_RUNNING {
+			if foundKey == ebiten.KeyArrowUp {
+				g.level.NewOrientation(180)
+			} else if foundKey == ebiten.KeyArrowDown {
+				g.level.NewOrientation(0)
+			} else if foundKey == ebiten.KeyArrowLeft {
+				g.level.NewOrientation(270)
+			} else if foundKey == ebiten.KeyArrowRight {
+				g.level.NewOrientation(90)
+			} else if foundKey == ebiten.KeyR {
+				g.restart = true
+			}
+		} else if g.gameState == GAME_WAITING {
+			if foundKey == ebiten.KeyR {
+				g.restart = true
+			}
 		}
+
 	}
-	if t.Sub(g.currentTime) > 200000000 {
+	if g.gameState == GAME_RUNNING && t.Sub(g.currentTime) > 200000000 {
 		g.currentTime = t
 		if g.restart {
 			g.restart = false
@@ -113,6 +125,10 @@ func (g *Game) Update() error {
 			g.level.MoveWorms()
 		}
 		g.needsDraw = true
+	} else if g.gameState == GAME_WAITING && g.restart {
+		g.restart = false
+		g.level.Restart()
+		g.StartGame()
 	}
 	return nil
 }
@@ -140,6 +156,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			op.GeoM.Translate(float64(g.level.candy.x*100), float64(g.level.candy.y*100))
 			screen.DrawImage(g.candyPicture, op)
 		}
+	} else if g.gameState == GAME_WAITING {
+
 	}
 }
 
@@ -155,6 +173,4 @@ func main() {
 	if err := ebiten.RunGame(g); err != nil {
 		log.Fatal(err)
 	}
-	DoesItWork()
-
 }
