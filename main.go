@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"image"
+	"image/color"
 	_ "image/png"
 
 	"log"
@@ -9,13 +11,14 @@ import (
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	"github.com/hajimehoshi/ebiten/v2/text/v2"
 )
 
 const (
 	GAME_WAITING = iota
 	GAME_RUNNING
-	GAME_OVER
 )
 
 type Game struct {
@@ -78,10 +81,6 @@ func (g *Game) StartGame() {
 	g.currentTime = g.startTime
 }
 
-func (g *Game) EndGame() {
-	g.gameState = GAME_OVER
-}
-
 func (g *Game) Update() error {
 	t := time.Now()
 	g.keys = inpututil.AppendPressedKeys(g.keys[:0])
@@ -116,13 +115,15 @@ func (g *Game) Update() error {
 		}
 
 	}
-	if g.gameState == GAME_RUNNING && t.Sub(g.currentTime) > 200000000 {
+	if g.gameState == GAME_RUNNING && g.HasGameEnded() {
+		g.gameState = GAME_WAITING
+	} else if g.gameState == GAME_RUNNING && t.Sub(g.currentTime) > 200000000 {
 		g.currentTime = t
 		if g.restart {
 			g.restart = false
 			g.level.Restart()
 		} else {
-			g.level.MoveWorms()
+			g.level.MoveWorm()
 		}
 		g.needsDraw = true
 	} else if g.gameState == GAME_WAITING && g.restart {
@@ -131,6 +132,33 @@ func (g *Game) Update() error {
 		g.StartGame()
 	}
 	return nil
+}
+
+func (g *Game) HasGameEnded() bool {
+	if g.level.worm == nil {
+		return true
+	} else {
+		return false
+	}
+}
+
+func (g *Game) DrawText(screen *ebiten.Image, str string, x float64, y float64) {
+	s, err := text.NewGoTextFaceSource(bytes.NewReader(fonts.PressStart2P_ttf))
+	if err != nil {
+		log.Fatal(err)
+	}
+	op := &text.DrawOptions{}
+	op.GeoM.Translate(x, y)
+	op.ColorScale.ScaleWithColor(color.RGBA{255, 0, 0, 0x80})
+
+	fontBaseSize := 20.0
+	scale := 1.0
+	text.Draw(screen, str, &text.GoTextFace{
+		Source: s,
+		Size:   fontBaseSize * float64(scale),
+	}, op)
+
+	op.GeoM.Reset()
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
@@ -157,7 +185,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			screen.DrawImage(g.candyPicture, op)
 		}
 	} else if g.gameState == GAME_WAITING {
-
+		g.DrawText(screen, "Press r to begin", 350, 500)
 	}
 }
 

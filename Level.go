@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"math/rand"
 )
 
@@ -11,10 +10,6 @@ type Level struct {
 	ycoords int
 	worm    *Worm
 	candy   *Coordinate
-}
-
-func DoesItWork() {
-	fmt.Print("toimiiko ollenkaan")
 }
 
 func NewLevel() *Level {
@@ -117,7 +112,7 @@ func (level *Level) WormWallCollision() bool {
 	return false
 }
 
-func (level *Level) MoveWorms() {
+func (level *Level) MoveWorm() {
 	if level.WormWallCollision() {
 		level.worm = nil
 	} else if level.worm.Move() {
