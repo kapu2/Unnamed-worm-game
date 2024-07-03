@@ -10,6 +10,8 @@ import (
 	"os"
 	"time"
 
+	"fmt"
+
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -31,6 +33,7 @@ type Game struct {
 	candyPicture *ebiten.Image
 	restart      bool
 	gameState    int
+	writeScore   bool
 }
 
 func NewGame() *Game {
@@ -117,6 +120,7 @@ func (g *Game) Update() error {
 	}
 	if g.gameState == GAME_RUNNING && g.HasGameEnded() {
 		g.gameState = GAME_WAITING
+		g.writeScore = true
 	} else if g.gameState == GAME_RUNNING && t.Sub(g.currentTime) > 200000000 {
 		g.currentTime = t
 		if g.restart {
@@ -167,16 +171,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		if g.needsDraw {
 			wormPositions := g.level.GetWormPositions()
 
-			//op.GeoM.Reset()
-
 			for i := 0; i < len(wormPositions); i++ {
-				//op.GeoM.Translate(float64(0), float64(0))
 				if i >= 0 {
 					op := &ebiten.DrawImageOptions{}
-					//op.GeoM.Reset()
 					op.GeoM.Translate(float64(wormPositions[i].x*100), float64(wormPositions[i].y*100))
-
-					//op.GeoM.Translate(float64(100), float64(100))
 					screen.DrawImage(g.wormPicture, op)
 				}
 			}
@@ -185,7 +183,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			screen.DrawImage(g.candyPicture, op)
 		}
 	} else if g.gameState == GAME_WAITING {
-		g.DrawText(screen, "Press r to begin", 350, 500)
+		if g.writeScore {
+			scoreStr := fmt.Sprintf("Score: %d", g.level.score)
+			g.DrawText(screen, scoreStr, 410, 400)
+		}
+		g.DrawText(screen, "Press r to begin", 350, 480)
 	}
 }
 

@@ -8,6 +8,7 @@ type Level struct {
 	name    string
 	xcoords int
 	ycoords int
+	score   int
 	worm    *Worm
 	candy   *Coordinate
 }
@@ -120,6 +121,7 @@ func (level *Level) MoveWorm() {
 		level.worm = nil
 	} else if level.worm.head.value == *level.candy {
 		level.worm.toGrow++
+		level.score++
 		level.NewCandy()
 	}
 }
