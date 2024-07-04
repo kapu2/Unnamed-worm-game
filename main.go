@@ -79,6 +79,7 @@ func (g *Game) WaitForStart() {
 }
 
 func (g *Game) StartGame() {
+	g.level.score = 0
 	g.gameState = GAME_RUNNING
 	g.startTime = time.Now()
 	g.currentTime = g.startTime
