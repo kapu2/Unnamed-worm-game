@@ -139,4 +139,5 @@ func (level *Level) Restart() {
 	}
 	level.worm = nil
 	level.AddWorm(wormName)
+	level.NewCandy()
 }
