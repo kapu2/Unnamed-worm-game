@@ -100,7 +100,7 @@ func (g *Game) Update() error {
 				}
 			}
 		}
-		if g.gameState == GAME_RUNNING {
+		if !g.HasGameEnded() {
 			if foundKey == ebiten.KeyArrowUp {
 				g.level.NewOrientation(180)
 			} else if foundKey == ebiten.KeyArrowDown {
@@ -112,7 +112,7 @@ func (g *Game) Update() error {
 			} else if foundKey == ebiten.KeyR {
 				g.restart = true
 			}
-		} else if g.gameState == GAME_WAITING {
+		} else {
 			if foundKey == ebiten.KeyR {
 				g.restart = true
 			}
@@ -124,7 +124,7 @@ func (g *Game) Update() error {
 		g.writeScore = true
 	} else if g.gameState == GAME_RUNNING && t.Sub(g.currentTime) > 200000000 {
 		g.currentTime = t
-		if g.restart {
+		if g.restart && foundKey != ebiten.KeyR { //Wait until key is released
 			g.restart = false
 			g.level.Restart()
 		} else {
@@ -132,9 +132,13 @@ func (g *Game) Update() error {
 		}
 		g.needsDraw = true
 	} else if g.gameState == GAME_WAITING && g.restart {
-		g.restart = false
-		g.level.Restart()
-		g.StartGame()
+		// Wait until key is released
+		if foundKey != ebiten.KeyR {
+			g.restart = false
+			g.level.Restart()
+			g.StartGame()
+		}
+
 	}
 	return nil
 }
