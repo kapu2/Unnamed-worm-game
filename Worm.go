@@ -11,8 +11,9 @@ type Coordinate struct {
 	y int
 }
 type Worm struct {
-	wormName    string
-	orientation int
+	wormName           string
+	pendingOrientation int
+	orientation        int
 	//length      int
 	head   *LinkedList
 	tail   *LinkedList
@@ -22,6 +23,7 @@ type Worm struct {
 func NewWorm(wormName string, space Coordinate, orientation int) *Worm {
 	worm := &Worm{}
 	worm.wormName = wormName
+	worm.pendingOrientation = orientation
 	worm.orientation = orientation
 	worm.toGrow = 10
 	worm.head = &LinkedList{space, nil, nil}
@@ -43,7 +45,7 @@ func (worm *Worm) SelfCollision() bool {
 
 func (worm *Worm) Move() bool {
 	newCoord := worm.head.value
-	switch worm.orientation {
+	switch worm.pendingOrientation {
 	case 0:
 		newCoord.y++
 	case 90:
@@ -53,6 +55,7 @@ func (worm *Worm) Move() bool {
 	case 270:
 		newCoord.x--
 	}
+	worm.orientation = worm.pendingOrientation
 	newHead := LinkedList{newCoord, worm.head, nil}
 	worm.head.previous = &newHead
 	worm.head = &newHead

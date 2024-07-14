@@ -80,7 +80,6 @@ func (level *Level) NewCandy() {
 		levelXY[Coord.y][Coord.x] = true
 	}
 	randIndex := rand.Int() % ((level.xcoords * level.ycoords) - len(wormOccupiedPositions))
-	//randIndex := (wormOccupiedPositions[0].x % level.xcoords) + wormOccupiedPositions[0].y*level.xcoords
 	for i := 0; i <= randIndex; i++ {
 		if levelXY[i/level.xcoords][i%level.xcoords] {
 			randIndex++
@@ -105,10 +104,10 @@ func (level *Level) WormWallCollision() bool {
 	if level.worm == nil {
 		return false
 	}
-	if (level.worm.orientation == 0 && level.worm.head.value.y == level.ycoords-1) ||
-		(level.worm.orientation == 90 && level.worm.head.value.x == level.xcoords-1) ||
-		(level.worm.orientation == 180 && level.worm.head.value.y == 0) ||
-		(level.worm.orientation == 270 && level.worm.head.value.x == 0) {
+	if (level.worm.pendingOrientation == 0 && level.worm.head.value.y == level.ycoords-1) ||
+		(level.worm.pendingOrientation == 90 && level.worm.head.value.x == level.xcoords-1) ||
+		(level.worm.pendingOrientation == 180 && level.worm.head.value.y == 0) ||
+		(level.worm.pendingOrientation == 270 && level.worm.head.value.x == 0) {
 		return true
 	}
 	return false
@@ -129,7 +128,7 @@ func (level *Level) MoveWorm() {
 
 func (level *Level) NewOrientation(orientation int) {
 	if Abs(orientation-level.worm.orientation) != 180 {
-		level.worm.orientation = orientation
+		level.worm.pendingOrientation = orientation
 	}
 }
 
