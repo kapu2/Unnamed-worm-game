@@ -80,7 +80,8 @@ func (level *Level) NewCandy() {
 		levelXY[Coord.y][Coord.x] = true
 	}
 	randIndex := rand.Int() % ((level.xcoords * level.ycoords) - len(wormOccupiedPositions))
-	for i := 0; i < randIndex; i++ {
+	//randIndex := (wormOccupiedPositions[0].x % level.xcoords) + wormOccupiedPositions[0].y*level.xcoords
+	for i := 0; i <= randIndex; i++ {
 		if levelXY[i/level.xcoords][i%level.xcoords] {
 			randIndex++
 		}
